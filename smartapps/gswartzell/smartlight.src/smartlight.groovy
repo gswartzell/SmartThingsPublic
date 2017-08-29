@@ -28,23 +28,58 @@ preferences {
 	section("Title") {
 		// TODO: put inputs here
 	}
+    section("Turn on this light") {
+        input "switches", "capability.switch", title: "Which lights to turn on?"
+        input "offset", "number", title: "Enable this many minutes after sunset"
+    }
+        section ("Who to detect") {
+        input "presenceSensors", "capability.presenceSensor"
+    }
 }
 
-def installed() {
-	log.debug "Installed with settings: ${settings}"
+def isDark = false
 
-	initialize()
+def installed() {
+    log.debug "Installed with settings: ${settings}"
+    initialize()
 }
 
 def updated() {
-	log.debug "Updated with settings: ${settings}"
-
-	unsubscribe()
-	initialize()
+    log.debug "Updated with settings: ${settings}"
+    unsubscribe()
+    initialize()
 }
 
 def initialize() {
-	// TODO: subscribe to attributes, devices, locations, etc.
+    // TODO: subscribe to attributes, devices, locations, etc.
+    subscribe(location, "sunset", sunsetHandler)
+    subscribe(location, "sunrise", sunriseHandler)
+	subscribe(presenceSensors, "presence", presenceHandler)
+    //schedule it to run today too
+    //scheduleTurnOn(location.currentValue("sunsetTime"))
 }
 
-// TODO: implement event handlers
+def presenceHandler(evt) {
+	if(evt.value == "present") {
+    	log.debug "Found Someone $evt.value"
+        isDark = true
+    	log.debug "isDark: $isDark"
+    } else {
+        log.debug "Found Someone $evt.value"
+        isDark = false
+    	log.debug "isDark: $isDark"
+	}        
+}
+
+def sunsetHandler(evt) {
+	log.debug "Found Sunset $evt.value"
+    isDark = true
+    log.debug "isDark: $isDark"
+}
+
+def sunriseHandler(evt) {
+	log.debug "Found Sunrise $evt.value"
+    isDark = false
+    log.debug "isDark: $isDark"
+    
+}
